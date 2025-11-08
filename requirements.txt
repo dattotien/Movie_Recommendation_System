@@ -1,0 +1,7 @@
+pyspark==3.4.1
+
+flask
+
+cassandra-driver
+
+kafka-python-ng

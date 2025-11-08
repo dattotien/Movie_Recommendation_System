@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Recommendation System</title>
+    <!-- Tải Tailwind CSS để làm đẹp -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen p-8">
+    <div class="container mx-auto max-w-2xl">
+      <h1 class="text-4xl font-bold text-center mb-8 text-blue-400">
+        Movie Recommendation System
+      </h1>
+
+      <!-- Form nhập User ID -->
+      <form
+        action="/"
+        method="POST"
+        class="bg-gray-800 p-6 rounded-lg shadow-lg mb-10"
+      >
+        <label for="userId" class="block text-lg font-medium text-gray-300 mb-2"
+          >Enter User ID:</label
+        >
+        <div class="flex">
+          <input
+            type="text"
+            id="userId"
+            name="userId"
+            value="{{ user_id }}"
+            placeholder="Example: user_123"
+            class="flex-grow p-3 rounded-l-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            class="bg-blue-600 p-3 rounded-r-md text-white font-semibold hover:bg-blue-700 transition duration-200"
+          >
+            Get Recommendations
+          </button>
+        </div>
+      </form>
+
+      <!-- Hiển thị lỗi (nếu có) -->
+      {% if error_message %}
+      <div
+        class="bg-red-800 text-red-100 p-4 rounded-md shadow-lg mb-8"
+        role="alert"
+      >
+        <strong class="font-bold">Error:</strong>
+        <span class="block sm:inline">{{ error_message }}</span>
+      </div>
+      {% endif %}
+
+      <!-- Hiển thị kết quả -->
+      {% if user_id and recommendations %}
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-semibold text-blue-300 mb-4">
+          Top 10 Recommendations for
+          <span class="font-bold text-white">{{ user_id }}</span>:
+        </h2>
+        <ul class="list-disc list-inside space-y-2 text-gray-200">
+          {% for movie_id in recommendations %}
+          <li class="text-lg">
+            Movie ID:
+            <span class="font-mono bg-gray-700 px-2 py-1 rounded"
+              >{{ movie_id }}</span
+            >
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+  </body>
+</html>
