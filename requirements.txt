@@ -5,3 +5,6 @@ flask
 cassandra-driver
 
 kafka-python-ng
+
+pandas
+requests

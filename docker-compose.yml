@@ -21,7 +21,6 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -50,6 +49,8 @@ services:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
       - hadoop_datanode_data:/hadoop/dfs/data
+
+  # 5. Cassandra (Cho Lớp Serving) - Giữ nguyên
   cassandra:
     image: cassandra:latest
     container_name: cassandra
@@ -58,27 +59,30 @@ services:
     volumes:
       - cassandra_data:/var/lib/cassandra
 
+  # 6. Web App (Giao diện người dùng) - ĐÃ SỬA
   app:
     build: .
     container_name: app
     volumes:
+      # Dòng này của bạn RẤT TỐT:
+      # Ánh xạ toàn bộ thư mục dự án (code + data) vào /app
       - .:/app
     ports:
-      - "5000:5000"
-      - "4040:4040"
+      - "5000:5000" # Cổng Flask
+      - "4040:4040" # Cổng Spark UI (dự phòng)
     depends_on:
       - kafka
       - cassandra
       - datanode
 
-    # === THÊM 3 DÒNG NÀY VÀO ===
+    # === SỬA DÒNG NÀY ===
+    # Thêm /app (để tìm 'scripts') VÀ /app/src (để tìm 'utils')
     environment:
-      - PYTHONPATH=/app/src
+      - PYTHONPATH=/app:/app/src
     # ============================
 
-    # command: >
-    #   sh -c "python src/webapp/app.py"
-    command: tail -f /dev/null
+    command: >
+      sh -c "python src/webapp/app.py"
 
 volumes:
   hadoop_namenode_data:
