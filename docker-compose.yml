@@ -68,8 +68,9 @@ services:
       # Ánh xạ toàn bộ thư mục dự án (code + data) vào /app
       - .:/app
     ports:
-      - "5000:5000" # Cổng Flask
-      - "4040:4040" # Cổng Spark UI (dự phòng)
+      - "5000:5000"
+      - "4040:4040"
+      - "8888:8888"   # Jupyter Notebook
     depends_on:
       - kafka
       - cassandra
