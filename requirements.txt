@@ -6,4 +6,18 @@ cassandra-driver
 
 kafka-python-ng
 
+pandas
+
+numpy
+
 notebook
+
+jupyter
+
+ipykernel
+
+matplotlib
+
+seaborn
+
+plotly
