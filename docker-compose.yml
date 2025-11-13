@@ -66,6 +66,7 @@ services:
     ports:
       - "5000:5000"
       - "4040:4040"
+      - "8888:8888"   # Jupyter Notebook
     depends_on:
       - kafka
       - cassandra

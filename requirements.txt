@@ -5,3 +5,5 @@ flask
 cassandra-driver
 
 kafka-python-ng
+
+notebook

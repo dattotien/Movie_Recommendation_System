@@ -4,6 +4,10 @@ RUN apt-get update && \
     apt-get install -y default-jdk && \
     apt-get clean
 
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV HADOOP_HOME=/usr/local/hadoop
+ENV PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
 WORKDIR /app
 COPY requirements.txt .
 
