@@ -1,21 +1,40 @@
 #!/bin/bash
 # =======================================================
-# Script: load_to_hdfs.sh - Đã fix JAVA_HOME
+# Script: load_to_hdfs.sh - Đã sửa cấu hình HDFS
 # =======================================================
-export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
-export YARN_CONF_DIR=/usr/local/hadoop/etc/hadoop
+
+# Cấu hình Hadoop
+export HADOOP_HOME=/opt/hadoop
+export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+# Tạo thư mục cấu hình nếu chưa có
+mkdir -p $HADOOP_CONF_DIR
+
+# Tạo file core-site.xml
+cat > $HADOOP_CONF_DIR/core-site.xml << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode:9000</value>
+    </property>
+</configuration>
+EOF
+
+# Đường dẫn HDFS
+HDFS_BASE="/movielens"
+
+# Local dataset paths - SỬA TÊN THƯ MỤC
+DATA_1M="/app/data/ml-1m"    # Đổi từ ml-1M thành ml-1m
+DATA_32M="/app/data/ml-32m"  # Đổi từ ml-32M thành ml-32m
 
 echo "===== Kiểm tra môi trường ====="
 java -version
-echo "JAVA_HOME: $JAVA_HOME"
+echo "HADOOP_HOME: $HADOOP_HOME"
 
-# HDFS Configuration
-HDFS_BASE="/user/haanh/movielens"
-
-# Local dataset paths
-DATA_1M="/mnt/d/BTL/Movie_Recommendation_System/data/ml-1M"
-DATA_32M="/mnt/d/BTL/Movie_Recommendation_System/data/ml-32M"
-
+echo "===== Kiểm tra kết nối HDFS ====="
+hdfs dfsadmin -report
 
 echo "===== Kiểm tra dữ liệu local ====="
 echo "ML-1M:"
