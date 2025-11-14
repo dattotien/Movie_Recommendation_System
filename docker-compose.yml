@@ -67,6 +67,7 @@ services:
       # Dòng này của bạn RẤT TỐT:
       # Ánh xạ toàn bộ thư mục dự án (code + data) vào /app
       - .:/app
+      - ./data:/app/data
     ports:
       - "5000:5000"
       - "4040:4040"
