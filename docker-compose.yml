@@ -24,6 +24,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
   # 3. NameNode (HDFS cho Lớp Batch) - Giữ nguyên
   namenode:
@@ -83,8 +84,8 @@ services:
       - PYTHONPATH=/app:/app/src
     # ============================
 
-    command: >
-      sh -c "python src/webapp/app.py"
+    command: tail -f /dev/null
+      # sh -c "python src/webapp/app.py"
 
 volumes:
   hadoop_namenode_data:
