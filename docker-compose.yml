@@ -58,7 +58,8 @@ services:
     ports:
       - "9042:9042" # Cổng API/Driver
     volumes:
-      - cassandra_data:/var/lib/cassandra
+      # - cassandra_data:/var/lib/cassandra
+      - ./cassandra_data_storage:/var/lib/cassandra
 
   # 6. Web App (Giao diện người dùng) - ĐÃ SỬA
   app:
@@ -90,4 +91,4 @@ services:
 volumes:
   hadoop_namenode_data:
   hadoop_datanode_data:
-  cassandra_data:
+  # cassandra_data:

@@ -161,3 +161,5 @@ def check_and_update_model(spark, new_ratings_df, batch_id):
         print(f"⏳ Chưa đủ ratings ({total_accumulated} < {MIN_RATINGS_FOR_UPDATE})")
         return None
 
+
+
