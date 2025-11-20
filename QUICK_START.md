@@ -22,33 +22,15 @@ docker compose up -d
 # Kiểm tra containers đang chạy
 docker compose ps
 
-# Đợi 30-60 giây để services khởi động
-sleep 30
-```
-
----
-
-### 2️⃣ Chạy Spark Streaming (Terminal 1 - Ubuntu)
-
-```bash
-# Mở terminal mới (Ctrl+Shift+T)
-cd /mnt/d/Big_Data/Movie_Recommendation_System
-
-# Vào container app
 docker compose exec app bash
 
  spark-submit src/batch/write_recommendations.py
-# Chạy Spark Streaming
-spark-submit \
-  --packages \
-  org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,\
-com.datastax.spark:spark-cassandra-connector-assembly_2.12:3.3.0 \
-  src/stream/process_stream.py
+ #Đợi chạy xong - ghi hoàn tất thì chạy tiếp 
+ python3 src/webapp/app.py
+ #Xong test thử và tạo 1 rating user đã mới chạy cái ở dưới
 
-**Giữ terminal này chạy!** (Nhấn Ctrl+C để dừng)
 
----
-
+ ***Mơt terminal khác***
 ### 3️⃣ Chạy Web Application (Terminal 2 - Ubuntu)
 
 ```bash
@@ -60,30 +42,22 @@ docker compose exec app bash
 
 # Di chuyển vào thư mục app
 cd /app
+# Chạy Spark Streaming
+spark-submit \
+  --packages \
+  org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,\
+com.datastax.spark:spark-cassandra-connector-assembly_2.12:3.3.0 \
+  src/stream/process_stream.py
 
-# Chạy Flask app
-python3 src/webapp/app.py
-```
-
-**Giữ terminal này chạy!** (Nhấn Ctrl+C để dừng)
+**Giữ terminal này chạy!** 
 
 ---
 
-### 4️⃣ Mở Browser
 
-**http://localhost:5000**
+# Chạy Flask app
 
-Hoặc từ Ubuntu:
+################################## Xong #####################################
 
-```bash
-# Mở browser từ terminal
-xdg-open http://localhost:5000
-
-# Hoặc dùng browser có sẵn
-firefox http://localhost:5000
-# hoặc
-google-chrome http://localhost:5000
-```
 
 ---
 
