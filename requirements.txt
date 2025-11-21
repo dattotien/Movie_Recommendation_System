@@ -4,7 +4,7 @@ flask
 
 cassandra-driver
 
-kafka-python-ng
+kafka-python
 
 pandas
 
