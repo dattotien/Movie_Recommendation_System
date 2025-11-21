@@ -24,6 +24,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
   # 3. NameNode (HDFS cho Lớp Batch) - Giữ nguyên
   namenode:
@@ -57,7 +58,8 @@ services:
     ports:
       - "9042:9042" # Cổng API/Driver
     volumes:
-      - cassandra_data:/var/lib/cassandra
+      # - cassandra_data:/var/lib/cassandra
+      - ./cassandra_data_storage:/var/lib/cassandra
 
   # 6. Web App (Giao diện người dùng) - ĐÃ SỬA
   app:
@@ -83,10 +85,10 @@ services:
       - PYTHONPATH=/app:/app/src
     # ============================
 
-    command: >
-      sh -c "python src/webapp/app.py"
+    command: tail -f /dev/null
+      # sh -c "python src/webapp/app.py"
 
 volumes:
   hadoop_namenode_data:
   hadoop_datanode_data:
-  cassandra_data:
+  # cassandra_data:

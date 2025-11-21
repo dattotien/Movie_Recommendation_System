@@ -13,7 +13,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 
 # --- Import các file của bạn ---
 # (Đảm bảo file này là file tôi đã gửi, có hàm get_cassandra_session, read_recs)
-from utils.cassandra_connector import get_cassandra_session, read_recs
+from utils.cassandra_connector import get_cassandra_session, read_recs, create_keyspace_and_table
+create_keyspace_and_table()
 # (Đảm bảo file này là file tôi đã gửi, có hàm send_new_rating)
 from scripts.kafka_producer import send_new_rating
 
@@ -159,8 +160,8 @@ get_cassandra_session()
 
 # 2. Tải chi tiết phim
 print("Loading movie details map...")
-MOVIE_MAP_PATH = 'data/ml-32m/movies.csv'
-LINKS_MAP_PATH = 'data/ml-32m/links.csv'
+MOVIE_MAP_PATH = 'data/ml-32m/ml-32m/movies.csv'
+LINKS_MAP_PATH = 'data/ml-32m/ml-32m/links.csv'
 MOVIE_MAP = load_movie_details(MOVIE_MAP_PATH, LINKS_MAP_PATH)
 print("Web App is ready.")
 
@@ -183,32 +184,51 @@ def get_recommendations():
         try:
             # === THAY ĐỔI CHÍNH Ở ĐÂY ===
             # Thay vì đọc từ C*, ta giả lập 1 danh sách ID phim
-            # movie_id_list = read_recs(user_id) # << DÒNG GỐC
-            movie_id_list = [1, 2, 3, 4, 5, 110, 260, 593] # << DÒNG THAY THẾ
+            movie_id_list = read_recs(user_id) # << DÒNG GỐC
+            # movie_id_list = [1, 2, 3, 4, 5, 110, 260, 593] # << DÒNG THAY THẾ
             # (Bạn có thể dùng bất kỳ ID nào có trong file movies.csv)
             # ============================
             
             if movie_id_list:
-                for movie_id in movie_id_list:
-                    # ... (phần code còn lại giữ nguyên) ...
-                    movie_details = MOVIE_MAP.get(int(movie_id))
+                # for movie_id in movie_id_list:
+                #     # ... (phần code còn lại giữ nguyên) ...
+                #     movie_details = MOVIE_MAP.get(int(movie_id))
                     
-                    if movie_details:
-                        title = movie_details.get('title', f"Không rõ tên (ID: {movie_id})")
-                        tmdb_id = movie_details.get('tmdbId')
-                        poster_url = get_poster_url(tmdb_id)
+                #     if movie_details:
+                #         title = movie_details.get('title', f"Không rõ tên (ID: {movie_id})")
+                #         tmdb_id = movie_details.get('tmdbId')
+                #         poster_url = get_poster_url(tmdb_id)
                         
-                        recommendations.append({
-                            "id": movie_id, 
-                            "title": title,
-                            "poster_url": poster_url
-                        })
-                    else:
-                         recommendations.append({
-                            "id": movie_id, 
-                            "title": f"Không rõ tên (ID: {movie_id})",
-                            "poster_url": None
-                        })
+                #         recommendations.append({
+                #             "id": movie_id, 
+                #             "title": title,
+                #             "poster_url": poster_url
+                #         })
+                #     else:
+                #          recommendations.append({
+                #             "id": movie_id, 
+                #             "title": f"Không rõ tên (ID: {movie_id})",
+                #             "poster_url": None
+                #         })
+                filtered_recs = []
+                for movie_id in movie_id_list:
+                    movie_details = MOVIE_MAP.get(int(movie_id))
+                    if not movie_details:
+                        continue
+                    title = movie_details.get('title')
+                    if not title or title.startswith('Không rõ tên'):
+                        continue
+                    tmdb_id = movie_details.get('tmdbId')
+                    poster_url = get_poster_url(tmdb_id) or 'https://via.placeholder.com/200x300.png?text=No+Image'
+
+                    filtered_recs.append({
+                        "id": movie_id,
+                        "title": title,
+                        "poster_url": poster_url
+                    })
+
+                # Lấy 10 phim cuối cùng sau khi đã lọc
+                recommendations = filtered_recs[-10:]
             else:
                 error = f"Không tìm thấy gợi ý cho User {user_id} (Lớp Batch chưa chạy?)."
         except Exception as e:
@@ -229,14 +249,10 @@ def handle_new_rating():
     rating = request.form.get('rating_rate')
     
     try:
-        # GỌI HÀM KAFKA PRODUCER
-        success = send_new_rating(user_id, movie_id, rating)
+        send_new_rating(user_id, movie_id, rating)
         
-        if success:
-            flash(f"Đã gửi rating (User={user_id}, Movie={movie_id}, Rating={rating}) vào Kafka! "
-                  f"Hãy 'Xem Gợi Ý' lại cho User {user_id} sau vài giây để thấy cập nhật.", 'success')
-        else:
-            flash('Gửi rating thất bại. Kiểm tra Kafka/Producer.', 'danger')
+        flash(f"Đã gửi rating (User={user_id}, Movie={movie_id}, Rating={rating}) vào Kafka! "
+            f"Hãy 'Xem Gợi Ý' lại cho User {user_id} sau vài giây để thấy cập nhật.", 'success')
             
     except Exception as e:
         flash(f'Lỗi khi gửi: {e}', 'danger')
