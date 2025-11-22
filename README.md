@@ -91,15 +91,19 @@ The project implements the **Lambda Architecture** with 3 primary, complementary
 
 # 5. Workflow Explanation
 
-### Batch Layer (Historical Processing)
-1.  **Ingestion:** Historical and accumulated data is stored in **HDFS**.
-2.  **Training:** **Spark MLlib** periodically retrains the **ALS** model on the entire dataset.
-3.  **Output:** Pre-calculated recommendations are batch-written to **Cassandra** (Batch View).
+## <a name="batch-processing"></a>Batch Processing (Historical Layer)
 
-### Speed Layer (Real-time Processing)
-1.  **Event Ingestion:** New user rating actions are pushed into **Apache Kafka**.
-2.  **Inference:** **Spark Streaming** loads the ALS model, reads from Kafka, and re-calculates recommendations **only for the interacting user**.
-3.  **Update:** The new recommendation list is immediately written to **Cassandra** (Real-time View).
+1. **Ingestion:** Historical and accumulated data is stored in **HDFS**.
+2. **Training:** **Spark MLlib** periodically retrains the **ALS** model on the entire dataset.
+3. **Output:** Pre-calculated recommendations are written to **Cassandra** as the **Batch View**.
+
+---
+
+## <a name="speed-processing"></a>Speed Processing (Real-time Layer)
+
+1. **Event Ingestion:** New user rating events are ingested through **Apache Kafka**.
+2. **Inference:** **Spark Streaming** loads the ALS model and updates recommendations **only for users with new interactions**.
+3. **Update:** Real-time recommendations are written instantly to **Cassandra** as the **Speed View**.
 
 ---
 
@@ -188,16 +192,25 @@ The entire ecosystem is **Dockerized** using `docker-compose.yml`.
 
 ---
 
-# 8. How to Run the Project (đợi chốt r mới sửa)
-1.  **Clone the repository.**
+# 8. How to Run the Project
+Follow these steps to set up and start the complete Movie Recommendation System, which includes batch processing, real-time streaming, and the Flask web application.
+1.  **Clone the repository.** 
+`git clone <REPOSITORY_URL>`, 
+`cd Movie_Recommendation_System`
 2.  **Start the Cluster:** Execute `docker-compose up -d`.
 3.  **Ingest Data:** Run the ingestion script: `./scripts/load_to_hdfs.sh`.
-4.  **Run Batch Job:** Execute the Spark Batch training process.
-5.  **Run Streaming Job:** Start the Spark Streaming process.
-6.  **Run Web App:** Launch the Flask application to query recommendations.
-
+4.  **Run Batch Job:** Execute the Spark Batch training process. `docker compose exec app bash`
+  - Run the Spark Batch job to write initial recommendations `spark-submit /app/src/batch/write_recommendations.py`
+5. **Run Web App:** Launch the Flask application to query recommendations.
+    - Enter the application container `docker compose exec app bash` `python3 src/webapp/app.py`
+    - After testing the web application and creating a user rating, that rating will be emitted to the stream (Kafka).
+6.  **Run Streaming Job:** Start the Spark Streaming process.
+  - Enter the application container `docker compose exec app bash`
+  - Navigate to the app directory inside the container `cd /app`
+  - Run the Spark Streaming job with required packages `spark-submit \--packages \org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,\com.datastax.spark:spark-cassandra-connector-assembly_2.12:3.3.0 \src/stream/process_stream.py`
+  - ⚠️ KEEP THIS TERMINAL RUNNING! Do NOT close it while the system is in use.
 ---
-
+The system is fully operational. Access the web interface at: http://127.0.0.1:5000/
 # 9. Team Responsibilities
 
 | Name | Responsibilities |
