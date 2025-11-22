@@ -152,6 +152,65 @@ def get_poster_url(tmdb_id):
         POSTER_CACHE[tmdb_id] = None
         return None
 
+def get_fallback_image(tmdb_id, title):
+    """
+    Tìm ảnh thay thế nếu không có poster.
+    Thử lấy backdrop hoặc dùng placeholder có tên phim.
+    """
+    if not tmdb_id or pd.isna(tmdb_id):
+        # Dùng placeholder với tên phim
+        title_encoded = requests.utils.quote(title[:30]) if title else "No+Image"
+        return f'https://via.placeholder.com/200x300.png?text={title_encoded}'
+    
+    try:
+        # Thử lấy backdrop image từ TMDB
+        api_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+        response = requests.get(api_url, timeout=5)
+        response.raise_for_status()
+        
+        data = response.json()
+        backdrop_path = data.get('backdrop_path')
+        
+        if backdrop_path:
+            # Dùng backdrop image (ảnh nền) làm thay thế
+            backdrop_url = f"https://image.tmdb.org/t/p/w300{backdrop_path}"
+            return backdrop_url
+        else:
+            # Không có backdrop, dùng placeholder với tên phim
+            title_encoded = requests.utils.quote(title[:30]) if title else "No+Image"
+            return f'https://via.placeholder.com/200x300.png?text={title_encoded}'
+    except Exception as e:
+        # Lỗi API, dùng placeholder với tên phim
+        title_encoded = requests.utils.quote(title[:30]) if title else "No+Image"
+        return f'https://via.placeholder.com/200x300.png?text={title_encoded}'
+
+def get_poster_from_other_movie(exclude_movie_ids):
+    """
+    Tìm poster từ một phim khác trong MOVIE_MAP (không nằm trong danh sách exclude_movie_ids).
+    """
+    import random
+    
+    # Lấy danh sách tất cả movie IDs trong MOVIE_MAP
+    all_movie_ids = list(MOVIE_MAP.keys())
+    
+    # Loại bỏ các phim đã có trong recommendations
+    available_movie_ids = [mid for mid in all_movie_ids if mid not in exclude_movie_ids]
+    
+    # Thử tìm poster từ các phim khác (random hoặc theo thứ tự)
+    random.shuffle(available_movie_ids)
+    
+    for other_movie_id in available_movie_ids[:50]:  # Thử tối đa 50 phim
+        other_movie = MOVIE_MAP.get(other_movie_id)
+        if other_movie:
+            other_tmdb_id = other_movie.get('tmdbId')
+            if other_tmdb_id:
+                poster_url = get_poster_url(other_tmdb_id)
+                if poster_url and 'via.placeholder.com' not in poster_url:
+                    return poster_url
+    
+    # Nếu không tìm thấy, trả về None
+    return None
+
 # === KHỞI ĐỘNG APP ===
 # 1. Khởi tạo kết nối Cassandra (hàm này sẽ tự tạo keyspace/table)
 print("Initializing Cassandra Session...")
@@ -189,26 +248,85 @@ def get_recommendations():
             # ============================
             
             if movie_id_list:
+                # Chỉ lấy phim có tên (bắt buộc)
+                movies_with_title = []  # Chỉ lưu phim có tên
+                exclude_ids = set(int(mid) for mid in movie_id_list)  # Danh sách ID cần loại trừ khi tìm poster
+                
+                # Bước 1: Thu thập tất cả phim có tên
                 for movie_id in movie_id_list:
                     # ... (phần code còn lại giữ nguyên) ...
                     movie_details = MOVIE_MAP.get(int(movie_id))
                     
                     if movie_details:
-                        title = movie_details.get('title', f"Không rõ tên (ID: {movie_id})")
+                        title = movie_details.get('title', '')
+                        # Chỉ lấy phim có tên (bắt buộc)
+                        if not title or title.startswith('Không rõ tên'):
+                            continue  # Bỏ qua phim không có tên
+                        
                         tmdb_id = movie_details.get('tmdbId')
                         poster_url = get_poster_url(tmdb_id)
                         
-                        recommendations.append({
-                            "id": movie_id, 
+                        # Nếu không có poster, thử tìm ảnh thay thế
+                        if not poster_url:
+                            poster_url = get_fallback_image(tmdb_id, title)
+                        
+                        # Kiểm tra có poster thật (không phải placeholder)
+                        has_real_poster = (poster_url and 
+                                         poster_url != 'https://via.placeholder.com/200x300.png?text=No+Image' and
+                                         'via.placeholder.com' not in poster_url)
+                        
+                        movies_with_title.append({
+                            "id": movie_id,
                             "title": title,
-                            "poster_url": poster_url
+                            "poster_url": poster_url,
+                            "has_real_poster": has_real_poster
+                        })
+                
+                # Bước 2: Thay thế poster cho phim không có poster bằng poster của phim KHÁC (không trong danh sách)
+                for movie in movies_with_title:
+                    if not movie["has_real_poster"]:
+                        # Tìm poster từ một phim khác trong MOVIE_MAP (không nằm trong recommendations)
+                        replacement_poster = get_poster_from_other_movie(exclude_ids)
+                        
+                        if replacement_poster:
+                            movie["poster_url"] = replacement_poster
+                        else:
+                            # Nếu không tìm thấy, dùng placeholder
+                            movie["poster_url"] = 'https://via.placeholder.com/200x300.png?text=No+Image'
+                
+                # Bước 3: Phân loại theo ưu tiên (có poster thật vs poster thay thế)
+                complete_recs = []  # Có poster thật + tên
+                incomplete_recs = []  # Chỉ có tên (poster đã được thay thế)
+                
+                for movie in movies_with_title:
+                    # Kiểm tra lại poster sau khi thay thế
+                    has_real_poster = (movie["poster_url"] and 
+                                     movie["poster_url"] != 'https://via.placeholder.com/200x300.png?text=No+Image' and
+                                     'via.placeholder.com' not in movie["poster_url"])
+                    
+                    if has_real_poster:
+                        complete_recs.append({
+                            "id": movie["id"],
+                            "title": movie["title"],
+                            "poster_url": movie["poster_url"]
                         })
                     else:
-                         recommendations.append({
-                            "id": movie_id, 
-                            "title": f"Không rõ tên (ID: {movie_id})",
-                            "poster_url": None
+                        incomplete_recs.append({
+                            "id": movie["id"],
+                            "title": movie["title"],
+                            "poster_url": movie["poster_url"]
                         })
+                
+                # Bước 4: Lấy 10 phim theo thứ tự ưu tiên
+                recommendations = complete_recs[:10]
+                if len(recommendations) < 10:
+                    needed = 10 - len(recommendations)
+                    recommendations.extend(incomplete_recs[:needed])
+                
+                # Debug log
+                if len(recommendations) < 10:
+                    print(f"⚠️  Chỉ tìm được {len(recommendations)} phim có tên từ top {len(movie_id_list)} recommendations", file=sys.stderr)
+                    print(f"   - Có poster thật: {len(complete_recs)}, Có poster thay thế: {len(incomplete_recs)}", file=sys.stderr)
             else:
                 error = f"Không tìm thấy gợi ý cho User {user_id} (Lớp Batch chưa chạy?)."
         except Exception as e:

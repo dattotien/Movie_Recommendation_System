@@ -1,4 +1,4 @@
-<head>
+<!-- <head>
     <style>
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -244,4 +244,260 @@
         </div>
     </div>
 </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hệ Thống Gợi Ý Phim</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        background-color: #64d1ad;
+        line-height: 1.8;
+        display: flex;
+        justify-content: center;
+        padding: 40px 0;
+        min-height: 100vh;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 1200px;
+        background: #ffffff89;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      h3 {
+        color: #121313;
+        font-size: 2.3em;
+        font-weight: 600;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 20px;
+        margin-top: 0;
+      }
+
+      form div {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      label {
+        font-weight: 600;
+        color: #555;
+        flex-shrink: 0;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 1em;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+        flex-grow: 0;
+        width: 350px;
+      }
+
+      button[type="submit"] {
+        background-color: #4dc677;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+      }
+
+      button[type="submit"]:hover {
+        background-color: #00b365;
+        transform: translateY(-1px);
+      }
+
+      button[type="submit"]:active {
+        transform: translateY(0);
+      }
+
+      .flash-message {
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 8px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .flash-message.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      p.error {
+        color: #dc3545;
+        font-weight: 500;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 10px 15px;
+        border-radius: 6px;
+        margin-top: 15px;
+      }
+
+      .results h4 {
+        color: #2c3e50;
+        margin-top: 25px;
+        margin-bottom: 20px;
+        font-size: 1.4em;
+        font-weight: 500;
+      }
+
+      .results .movie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 25px;
+        list-style-type: none;
+        padding-left: 0;
+        margin: 0;
+      }
+      .movie-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+      }
+
+      .results .movie-card {
+        background: #fefefe;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        font-size: 0.95em;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .results .movie-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .results .movie-card img {
+        width: 100%;
+        height: 270px;
+        background-color: #e0e0e0;
+        object-fit: cover;
+        border-top-left-radius: 9px;
+        border-top-right-radius: 9px;
+        display: block;
+      }
+
+      .results .movie-card .movie-title {
+        padding: 12px 10px;
+        font-weight: bold;
+        color: #444;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+      }
+      @media (max-width: 768px) {
+        .container {
+          width: 95%;
+          margin: 20px auto;
+          padding: 20px 15px;
+        }
+        form div {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        input[type="text"] {
+          width: 100% !important;
+          box-sizing: border-box;
+        }
+        button[type="submit"] {
+          width: 100%;
+        }
+        .results .movie-grid {
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 15px;
+        }
+        .results .movie-card img {
+          height: 210px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>DANH SÁCH GỢI Ý PHIM</h3>
+      <form action="/get_recs" method="POST">
+        <div>
+          <label for="user_id_lookup">Nhập User ID:</label>
+          <input
+            type="text"
+            id="user_id_lookup"
+            name="user_id_lookup"
+            placeholder="Ví dụ: 123"
+            value="{{ user_id_checked or '' }}"
+          />
+
+          <button type="submit">Xem Gợi Ý</button>
+        </div>
+      </form>
+
+      <div class="results">
+        {% if lookup_error %}
+        <p class="error">{{ lookup_error }}</p>
+        {% endif %} {% if recs_list %}
+        <h4>Gợi ý cho User <strong>{{ user_id_checked }}</strong>:</h4>
+
+        <ul class="movie-grid">
+          {% for movie in recs_list %}
+          <li>
+            <a
+              class="movie-link"
+              href="{{ url_for('movie_details', movie_id=movie.id, user_id=user_id_checked) }}"
+            >
+              <div class="movie-card">
+                <img
+                  src="{{ movie.poster_url or 'https://via.placeholder.com/200x300.png?text=No+Image' }}"
+                  alt="{{ movie.title }}"
+                />
+
+                <div class="movie-title" title="{{ movie.title }}">
+                  {{ movie.title }}
+                </div>
+              </div>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </body>
 </html>
