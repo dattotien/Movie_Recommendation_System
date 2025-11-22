@@ -1,2 +1,29 @@
 data/ml-32m/
 data/ml-1m/
+
+# Scripts tạm thời (backup, fix, check)
+scripts/backup_model_hdfs.sh
+scripts/restore_model_hdfs.sh
+scripts/fix_metadata*.sh
+scripts/fix_metadata*.py
+scripts/check_and_push_model.sh
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -105,55 +105,75 @@ The project implements the **Lambda Architecture** with 3 primary, complementary
 
 # 6. Repository Structure
 ```
-/Movie_Recommendation_System/
-├── 📂 docs/
-│   ├── SystemArchitecture.png           # System architecture diagram
-│   └── FinalReport.docx                 # Final project report
+Movie_Recommendation_System/
 │
-├── 📂 data/
-│    ├── 📂 ml-1m/                       # MovieLens 1M dataset (for testing)
-│    │   ├── ratings.csv
-│    │   ├── movies.csv
-│    │   └── README.txt
-│    │
-│    └── 📂 ml-32m/                      # MovieLens 32M dataset (full-scale)
-│         ├── ratings.csv
-│         ├── movies.csv
-│         └── README.txt
+├── 📄 README.md                          # Main documentation
+├── 📄 QUICK_START.md                     # Quick start guide
+├── 📄 SETUP_GUIDE.md                     # Detailed setup guide
+├── 📄 requirements.txt                   # List of Python libraries
+├── 📄 docker-compose.yml                 # Docker Compose configuration
+├── 📄 Dockerfile                         # Docker image configuration
+├── 📄 core-site.xml                      # HDFS configuration
 │
-├── 📂 notebooks/
-│   └── 01-EDA-MovieLens.ipynb           # Exploratory data analysis notebook
+├── 📁 src/                               # Main source code
+│   ├── 📁 batch/                         # Batch processing (Spark)
+│   │   ├── __init__.py
+│   │   ├── train_model.ipynb             # Model training notebook
+│   │   ├── write_recommendations.py      # Writes recommendations to Cassandra
+│   │   └── 📁 als_model_32m/             # Trained ALS model
+│   │       ├── 📁 itemFactors/           # Movie factor matrix (100+ .parquet files)
+│   │       ├── 📁 userFactors/           # User factor matrix (100+ .parquet files)
+│   │       └── 📁 metadata/              # Model metadata
+│   │
+│   ├── 📁 online/                        # Online recommendations processing
+│   │   ├── __init__.py
+│   │   └── user_factor_utils.py          # Online computation utilities
+│   │
+│   ├── 📁 stream/                        # Streaming processing (Spark Streaming)
+│   │   ├── __init__.py
+│   │   └── process_stream.py             # Processes real-time ratings from Kafka
+│   │
+│   ├── 📁 utils/                         # General utilities
+│   │   ├── __init__.py
+│   │   └── cassandra_connector.py        # Cassandra connector
+│   │
+│   └── 📁 webapp/                        # Flask web application
+│       ├── app.py                        # Main Flask application
+│       ├── README.md                     # Webapp documentation
+│       ├── 📁 static/                    # Static resources (CSS, JS, images)
+│       └── 📁 templates/                 # HTML templates
+│           ├── index.html                # Home page
+│           └── movie_details.html        # Movie details page
 │
-├── 📂 scripts/
-│   ├── load_to_hdfs.sh                  # Script to upload data to HDFS
-│   ├── kafka_producer.py                # Sends new ratings to Kafka
-│   └── setup_env.sh                     # Environment setup script
+├── 📁 scripts/                           # Utility scripts
+│   ├── setup_env.sh                      # Environment setup
+│   ├── load_to_hdfs.sh                   # Load data to HDFS
+│   ├── push_model_to_hdfs.py             # Push model to HDFS
+│   ├── check_and_push_model.sh           # Check and push model
+│   ├── kafka_producer.py                 # Producer sends data to Kafka
 │
-├── 📂 src/
-│   ├── 📦 batch/                         # Batch Layer: Offline processing
-│   │   ├── __init__.py
-│   │   └── train_model.py               # Train ALS recommendation model
-│   │
-│   ├── 📦 stream/                        # Speed Layer: Real-time processing
-│   │   ├── __init__.py
-│   │   └── process_stream.py            # Handle real-time rating ingestion
-│   │
-│   ├── 📦 webapp/                        # Web application (Flask/Streamlit)
-│   │   ├── __init__.py
-│   │   ├── app.py                       # Main web interface
-│   │   ├── templates/
-│   │   │   └── index.html               # UI template
-│   │   └── static/
-│   │       └── style.css                # Front-end styling
-│   │
-│   └── 📦 utils/
-│       ├── __init__.py
-│       └── Cassandra_connector.py       # Cassandra database connector
 │
-├── .gitignore
-├── requirements.txt                     # Required Python dependencies
-└── README.md                            # Project documentation
-```        
+├── 📁 notebooks/                         # Jupyter Notebooks
+│   └── 01-EDA-MovieLens.ipynb           # MovieLens data analysis
+│
+├── 📁 data/                              # Input data
+│   ├── 📁 ml-1m/                         # MovieLens 1M Dataset
+│   │   └── 📁 ml-1m/
+│   └── 📁 ml-32m/                        # MovieLens 32M Dataset
+│       └── 📁 ml-32m/
+│
+└── 📁 cassandra_data_storage/            # Cassandra data (persistent)
+    ├── 📁 commitlog/                     # Commit logs
+    ├── 📁 data/                          # Cassandra data
+    │   ├── 📁 movie_recs/                # Recommendations keyspace
+    │   │   └── 📁 user_recommendations-*/ # user_recommendations table
+    │   ├── 📁 system/                    # Cassandra system
+    │   ├── 📁 system_auth/               # Authentication
+    │   ├── 📁 system_distributed/        # Distributed system
+    │   ├── 📁 system_schema/             # Schema metadata
+    │   └── 📁 system_traces/             # Traces
+    └── 📁 saved_caches/                  # Saved caches
+```       
 
 
 ---
