@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -193,6 +193,296 @@
       </div>
       {% else %}
       <p>Không thể tải thông tin phim.</p>
+      {% endif %}
+    </div>
+  </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ movie.title or 'Chi tiết phim' }}</title>
+    <style>
+      /* --- COPY STYLE TỪ TRANG CHỦ ĐỂ ĐỒNG BỘ --- */
+      body {
+        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        background-color: #64d1ad; /* Màu nền xanh ngọc */
+        line-height: 1.8;
+        display: flex;
+        justify-content: center;
+        padding: 40px 0;
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 1000px; /* Rộng hơn một chút để chứa info phim */
+        background: #ffffff89; /* Nền trắng mờ */
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Link quay lại */
+      .back-link {
+        display: inline-block;
+        margin-bottom: 25px;
+        color: #4d87c6;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 1.05em;
+        transition: color 0.2s;
+      }
+      .back-link:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+
+      /* --- PHẦN CHI TIẾT PHIM --- */
+      .movie-detail-layout {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+      }
+
+      .movie-detail-poster {
+        flex-shrink: 0; /* Không cho poster bị co lại */
+      }
+
+      .movie-detail-poster img {
+        width: 300px; /* Poster to rõ */
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        background-color: #eee;
+      }
+
+      .movie-detail-info {
+        flex-grow: 1;
+      }
+
+      .movie-detail-info h1 {
+        font-size: 2.5em;
+        color: #121313;
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .movie-detail-info .tagline {
+        font-style: italic;
+        color: #666;
+        font-size: 1.1em;
+        margin-bottom: 20px;
+      }
+
+      .movie-detail-info .meta-info {
+        background-color: rgba(255, 255, 255, 0.5);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .movie-detail-info .genres {
+        font-weight: 600;
+        color: #444;
+        margin: 0;
+      }
+
+      .movie-detail-info h3 {
+        color: #2c3e50;
+        font-size: 1.5em;
+        margin-bottom: 10px;
+        border-bottom: 2px solid #4d87c6; /* Line màu xanh chủ đạo */
+        display: inline-block;
+        padding-bottom: 5px;
+      }
+
+      .movie-detail-info .overview {
+        font-size: 1.05em;
+        line-height: 1.8;
+        color: #333;
+        text-align: justify;
+      }
+
+      /* --- PHẦN RATING (PANEL) --- */
+      .rating-panel {
+        margin-top: 40px;
+        padding: 30px;
+        background-color: #ffffff; /* Nền trắng rõ hơn để nổi bật */
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+
+      .rating-panel h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.4em;
+        color: #444;
+        text-align: center;
+        border: none;
+        width: 100%;
+      }
+
+      /* Form Styles giống trang chủ */
+      form div {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      label {
+        font-weight: 600;
+        color: #555;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 10px; /* Bo góc giống trang chủ */
+        font-size: 1em;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+        width: 200px;
+      }
+
+      button[type="submit"] {
+        background-color: #4d87c6; /* Màu xanh chủ đạo */
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 50px; /* Nút hình viên thuốc */
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        box-shadow: 0 4px 6px rgba(77, 135, 198, 0.3);
+      }
+
+      button[type="submit"]:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+      }
+
+      .error {
+        color: #dc3545;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 10px 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      /* --- RESPONSIVE --- */
+      @media (max-width: 768px) {
+        .container {
+          width: 95%;
+          padding: 20px;
+        }
+        .movie-detail-layout {
+          flex-direction: column;
+          align-items: center;
+        }
+        .movie-detail-poster img {
+          width: 220px;
+          margin-bottom: 20px;
+        }
+        .movie-detail-info h1 {
+          font-size: 1.8em;
+          text-align: center;
+        }
+        .movie-detail-info .tagline {
+          text-align: center;
+          display: block;
+        }
+        form div {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+          width: 100%;
+          box-sizing: border-box;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a class="back-link" href="{{ url_for('index') }}">
+        &larr; Quay lại trang chủ
+      </a>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% elif movie %}
+      <div class="movie-detail-layout">
+        <div class="movie-detail-poster">
+          <img
+            src="{{ movie.poster_url_large or 'https://via.placeholder.com/300x450.png?text=No+Image' }}"
+            alt="{{ movie.title }}"
+          />
+        </div>
+
+        <div class="movie-detail-info">
+          <h1>{{ movie.title }}</h1>
+          {% if movie.tagline %}
+          <span class="tagline">"{{ movie.tagline }}"</span>
+          {% endif %}
+
+          <div class="meta-info">
+            <p class="genres">🎬 Thể loại: {{ movie.genres }}</p>
+          </div>
+
+          <h3>Mô tả nội dung</h3>
+          <p class="overview">
+            {{ movie.overview or "Chưa có mô tả cho phim này." }}
+          </p>
+        </div>
+      </div>
+
+      <div class="rating-panel">
+        <h3>✨ Bạn đã xem phim này? Hãy đánh giá nhé!</h3>
+        <form action="{{ url_for('handle_new_rating') }}" method="POST">
+          <input type="hidden" name="movie_id_rate" value="{{ movie.id }}" />
+
+          <div>
+            <label for="user_id_rate">User ID:</label>
+            <input
+              type="text"
+              id="user_id_rate"
+              name="user_id_rate"
+              placeholder="Nhập User ID của bạn"
+              value="{{ user_id_to_rate or '' }}"
+              required
+            />
+
+            <label for="rating_rate">Điểm số:</label>
+            <input
+              type="number"
+              id="rating_rate"
+              name="rating_rate"
+              min="0.5"
+              max="5"
+              step="0.5"
+              value="5.0"
+              required
+            />
+
+            <button type="submit">Gửi Đánh Giá</button>
+          </div>
+        </form>
+      </div>
+      {% else %}
+      <p class="error">Không tìm thấy thông tin phim.</p>
       {% endif %}
     </div>
   </body>
