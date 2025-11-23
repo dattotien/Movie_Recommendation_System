@@ -17,7 +17,7 @@
 ---
 
 # 1. Project Overview
-![Model](Move-recommendation-system.jpg)
+![Model](Deployment_Architecture.png)
 This project is a **Movie Recommendation System** built entirely using **Big Data technologies**, designed under the **Lambda Architecture**.  
 It combines:
 
