@@ -81,7 +81,7 @@ Two versions included:
 ---
 
 # 4. System Architecture
-
+![Model](MovieRecs_architect.jpg)
 The project implements the **Lambda Architecture** with 3 primary, complementary layers:
 
 - **Batch Layer (HDFS, Spark MLlib):** Computes high-accuracy "Batch Views" (full historical model retraining).
