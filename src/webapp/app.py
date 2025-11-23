@@ -1,6 +1,7 @@
 # src/webapp/app.py
 import sys
 import os
+import random
 from flask import Flask, render_template, request, redirect, url_for, flash
 import pandas as pd
 import requests
@@ -13,7 +14,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 
 # --- Import các file của bạn ---
 # (Đảm bảo file này là file tôi đã gửi, có hàm get_cassandra_session, read_recs)
-from utils.cassandra_connector import get_cassandra_session, read_recs
+from utils.cassandra_connector import get_cassandra_session, read_recs, create_keyspace_and_table
+create_keyspace_and_table()
 # (Đảm bảo file này là file tôi đã gửi, có hàm send_new_rating)
 from scripts.kafka_producer import send_new_rating
 
@@ -188,7 +190,6 @@ def get_poster_from_other_movie(exclude_movie_ids):
     """
     Tìm poster từ một phim khác trong MOVIE_MAP (không nằm trong danh sách exclude_movie_ids).
     """
-    import random
     
     # Lấy danh sách tất cả movie IDs trong MOVIE_MAP
     all_movie_ids = list(MOVIE_MAP.keys())
@@ -218,8 +219,8 @@ get_cassandra_session()
 
 # 2. Tải chi tiết phim
 print("Loading movie details map...")
-MOVIE_MAP_PATH = 'data/ml-32m/movies.csv'
-LINKS_MAP_PATH = 'data/ml-32m/links.csv'
+MOVIE_MAP_PATH = 'data/ml-32m/ml-32m/movies.csv'
+LINKS_MAP_PATH = 'data/ml-32m/ml-32m/links.csv'
 MOVIE_MAP = load_movie_details(MOVIE_MAP_PATH, LINKS_MAP_PATH)
 print("Web App is ready.")
 
@@ -242,33 +243,27 @@ def get_recommendations():
         try:
             # === THAY ĐỔI CHÍNH Ở ĐÂY ===
             # Thay vì đọc từ C*, ta giả lập 1 danh sách ID phim
-            # movie_id_list = read_recs(user_id) # << DÒNG GỐC
-            movie_id_list = [1, 2, 3, 4, 5, 110, 260, 593] # << DÒNG THAY THẾ
+            movie_id_list = read_recs(user_id) # << DÒNG GỐC
+            # movie_id_list = [1, 2, 3, 4, 5, 110, 260, 593] # << DÒNG THAY THẾ
             # (Bạn có thể dùng bất kỳ ID nào có trong file movies.csv)
             # ============================
             
             if movie_id_list:
-                # Chỉ lấy phim có tên (bắt buộc)
+                # Bước 1: Thu thập tất cả phim có tên từ recommendations
                 movies_with_title = []  # Chỉ lưu phim có tên
                 exclude_ids = set(int(mid) for mid in movie_id_list)  # Danh sách ID cần loại trừ khi tìm poster
                 
-                # Bước 1: Thu thập tất cả phim có tên
                 for movie_id in movie_id_list:
-                    # ... (phần code còn lại giữ nguyên) ...
                     movie_details = MOVIE_MAP.get(int(movie_id))
                     
                     if movie_details:
                         title = movie_details.get('title', '')
                         # Chỉ lấy phim có tên (bắt buộc)
                         if not title or title.startswith('Không rõ tên'):
-                            continue  # Bỏ qua phim không có tên
+                            continue
                         
                         tmdb_id = movie_details.get('tmdbId')
                         poster_url = get_poster_url(tmdb_id)
-                        
-                        # Nếu không có poster, thử tìm ảnh thay thế
-                        if not poster_url:
-                            poster_url = get_fallback_image(tmdb_id, title)
                         
                         # Kiểm tra có poster thật (không phải placeholder)
                         has_real_poster = (poster_url and 
@@ -279,53 +274,79 @@ def get_recommendations():
                             "id": movie_id,
                             "title": title,
                             "poster_url": poster_url,
-                            "has_real_poster": has_real_poster
+                            "has_real_poster": has_real_poster,
+                            "tmdb_id": tmdb_id
                         })
                 
-                # Bước 2: Thay thế poster cho phim không có poster bằng poster của phim KHÁC (không trong danh sách)
-                for movie in movies_with_title:
-                    if not movie["has_real_poster"]:
-                        # Tìm poster từ một phim khác trong MOVIE_MAP (không nằm trong recommendations)
-                        replacement_poster = get_poster_from_other_movie(exclude_ids)
-                        
-                        if replacement_poster:
-                            movie["poster_url"] = replacement_poster
-                        else:
-                            # Nếu không tìm thấy, dùng placeholder
-                            movie["poster_url"] = 'https://via.placeholder.com/200x300.png?text=No+Image'
-                
-                # Bước 3: Phân loại theo ưu tiên (có poster thật vs poster thay thế)
+                # Bước 2: Phân loại - ưu tiên phim có poster thật
                 complete_recs = []  # Có poster thật + tên
-                incomplete_recs = []  # Chỉ có tên (poster đã được thay thế)
+                incomplete_recs = []  # Chỉ có tên (chưa có poster)
                 
                 for movie in movies_with_title:
-                    # Kiểm tra lại poster sau khi thay thế
-                    has_real_poster = (movie["poster_url"] and 
-                                     movie["poster_url"] != 'https://via.placeholder.com/200x300.png?text=No+Image' and
-                                     'via.placeholder.com' not in movie["poster_url"])
-                    
-                    if has_real_poster:
+                    if movie["has_real_poster"]:
                         complete_recs.append({
                             "id": movie["id"],
                             "title": movie["title"],
                             "poster_url": movie["poster_url"]
                         })
                     else:
-                        incomplete_recs.append({
-                            "id": movie["id"],
-                            "title": movie["title"],
-                            "poster_url": movie["poster_url"]
-                        })
+                        incomplete_recs.append(movie)
                 
-                # Bước 4: Lấy 10 phim theo thứ tự ưu tiên
-                recommendations = complete_recs[:10]
+                # Bước 3: Tìm poster thay thế cho phim không có poster
+                incomplete_recs_with_poster = []
+                for movie in incomplete_recs:
+                    # Thử lấy fallback image (backdrop hoặc placeholder)
+                    fallback_poster = get_fallback_image(movie["tmdb_id"], movie["title"])
+                    
+                    # Nếu vẫn là placeholder, thử tìm poster từ phim khác
+                    if 'via.placeholder.com' in fallback_poster:
+                        replacement_poster = get_poster_from_other_movie(exclude_ids)
+                        if replacement_poster:
+                            final_poster = replacement_poster
+                        else:
+                            final_poster = fallback_poster
+                    else:
+                        final_poster = fallback_poster
+                    
+                    # Thêm vào danh sách với poster thay thế
+                    incomplete_recs_with_poster.append({
+                        "id": movie["id"],
+                        "title": movie["title"],
+                        "poster_url": final_poster
+                    })
+                
+                # Bước 4: Lấy đủ 10 phim theo thứ tự ưu tiên
+                recommendations = []
+                
+                # Ưu tiên 1: Lấy phim có poster thật trước
+                recommendations.extend(complete_recs[:10])
+                
+                # Ưu tiên 2: Nếu chưa đủ 10, lấy thêm phim có poster thay thế
                 if len(recommendations) < 10:
                     needed = 10 - len(recommendations)
-                    recommendations.extend(incomplete_recs[:needed])
+                    recommendations.extend(incomplete_recs_with_poster[:needed])
+                
+                # Nếu vẫn chưa đủ 10, lấy thêm từ danh sách recommendations ban đầu
+                if len(recommendations) < 10 and len(movie_id_list) > len(movies_with_title):
+                    remaining_ids = [mid for mid in movie_id_list if int(mid) not in [m["id"] for m in recommendations]]
+                    for movie_id in remaining_ids[:10 - len(recommendations)]:
+                        movie_details = MOVIE_MAP.get(int(movie_id))
+                        if movie_details:
+                            title = movie_details.get('title', f'Movie {movie_id}')
+                            tmdb_id = movie_details.get('tmdbId')
+                            poster_url = get_fallback_image(tmdb_id, title)
+                            recommendations.append({
+                                "id": movie_id,
+                                "title": title,
+                                "poster_url": poster_url
+                            })
+                
+                # Đảm bảo có đúng 10 phim (hoặc ít hơn nếu không đủ)
+                recommendations = recommendations[:10]
                 
                 # Debug log
                 if len(recommendations) < 10:
-                    print(f"⚠️  Chỉ tìm được {len(recommendations)} phim có tên từ top {len(movie_id_list)} recommendations", file=sys.stderr)
+                    print(f"⚠️  Chỉ tìm được {len(recommendations)} phim có tên từ {len(movie_id_list)} recommendations", file=sys.stderr)
                     print(f"   - Có poster thật: {len(complete_recs)}, Có poster thay thế: {len(incomplete_recs)}", file=sys.stderr)
             else:
                 error = f"Không tìm thấy gợi ý cho User {user_id} (Lớp Batch chưa chạy?)."
@@ -347,14 +368,10 @@ def handle_new_rating():
     rating = request.form.get('rating_rate')
     
     try:
-        # GỌI HÀM KAFKA PRODUCER
-        success = send_new_rating(user_id, movie_id, rating)
+        send_new_rating(user_id, movie_id, rating)
         
-        if success:
-            flash(f"Đã gửi rating (User={user_id}, Movie={movie_id}, Rating={rating}) vào Kafka! "
-                  f"Hãy 'Xem Gợi Ý' lại cho User {user_id} sau vài giây để thấy cập nhật.", 'success')
-        else:
-            flash('Gửi rating thất bại. Kiểm tra Kafka/Producer.', 'danger')
+        flash(f"Đã gửi rating (User={user_id}, Movie={movie_id}, Rating={rating}) vào Kafka! "
+            f"Hãy 'Xem Gợi Ý' lại cho User {user_id} sau vài giây để thấy cập nhật.", 'success')
             
     except Exception as e:
         flash(f'Lỗi khi gửi: {e}', 'danger')
