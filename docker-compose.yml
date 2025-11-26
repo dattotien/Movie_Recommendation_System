@@ -1,5 +1,5 @@
 services:
-  # 1. Zookeeper (Cho Kafka) - Giữ nguyên
+  # 1. Zookeeper (Cho Kafka) 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.2
     container_name: zookeeper
@@ -9,7 +9,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
-  # 2. Kafka (Cho Lớp Speed) - Giữ nguyên
+  # 2. Kafka (Cho Lớp Speed) 
   kafka:
     image: confluentinc/cp-kafka:7.3.2
     container_name: kafka
@@ -25,7 +25,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
-  # 3. NameNode (HDFS cho Lớp Batch) - Giữ nguyên
+  # 3. NameNode (HDFS cho Lớp Batch) 
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
@@ -38,7 +38,7 @@ services:
     volumes:
       - hadoop_namenode_data:/hadoop/dfs/name
 
-  # 4. DataNode (HDFS cho Lớp Batch) - Giữ nguyên
+  # 4. DataNode (HDFS cho Lớp Batch) 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode
@@ -50,7 +50,7 @@ services:
     volumes:
       - hadoop_datanode_data:/hadoop/dfs/data
 
-  # 5. Cassandra (Cho Lớp Serving) - Giữ nguyên
+  # 5. Cassandra (Cho Lớp Serving) 
   cassandra:
     image: cassandra:latest
     container_name: cassandra
@@ -59,13 +59,11 @@ services:
     volumes:
       - cassandra_data:/var/lib/cassandra
 
-  # 6. Web App (Giao diện người dùng) - ĐÃ SỬA
+  # 6. Web App (Giao diện người dùng) 
   app:
     build: .
     container_name: app
     volumes:
-      # Dòng này của bạn RẤT TỐT:
-      # Ánh xạ toàn bộ thư mục dự án (code + data) vào /app
       - .:/app
       - ./data:/app/data
     ports:
@@ -77,11 +75,8 @@ services:
       - cassandra
       - datanode
 
-    # === SỬA DÒNG NÀY ===
-    # Thêm /app (để tìm 'scripts') VÀ /app/src (để tìm 'utils')
     environment:
       - PYTHONPATH=/app:/app/src
-    # ============================
 
     command: >
       sh -c "python src/webapp/app.py"

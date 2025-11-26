@@ -1,17 +1,10 @@
-#!/bin/bash
-# =======================================================
-# Script: load_to_hdfs.sh - Đã sửa cấu hình HDFS
-# =======================================================
-
 # Cấu hình Hadoop
 export HADOOP_HOME=/opt/hadoop
 export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
 
-# Tạo thư mục cấu hình nếu chưa có
 mkdir -p $HADOOP_CONF_DIR
 
-# Tạo file core-site.xml
 cat > $HADOOP_CONF_DIR/core-site.xml << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -22,12 +15,10 @@ cat > $HADOOP_CONF_DIR/core-site.xml << EOF
 </configuration>
 EOF
 
-# Đường dẫn HDFS
 HDFS_BASE="/movielens"
 
-# Local dataset paths - SỬA TÊN THƯ MỤC
-DATA_1M="/app/data/ml-1m"    # Đổi từ ml-1M thành ml-1m
-DATA_32M="/app/data/ml-32m"  # Đổi từ ml-32M thành ml-32m
+DATA_1M="/app/data/ml-1m"    
+DATA_32M="/app/data/ml-32m"  
 
 echo "===== Kiểm tra môi trường ====="
 java -version

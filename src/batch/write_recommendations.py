@@ -16,14 +16,6 @@ TOP_K = int(os.environ.get("ALS_TOP_K", "30"))
 
 
 def load_model(spark: SparkSession) -> ALSModel:
-    """
-    Tải ALS model theo chiến lược ưu tiên:
-    - local-first (default): thử load model local, nếu thất bại thì thử HDFS
-    - hdfs-first          : ưu tiên load từ HDFS
-    - hdfs-only           : chỉ load từ HDFS
-
-    Nếu load từ local và AUTO_PUSH_MODEL_TO_HDFS=True thì sẽ tự động copy model lên HDFS.
-    """
     strategies = {
         "local-first": ["local", "hdfs"],
         "hdfs-first": ["hdfs", "local"],
@@ -35,28 +27,28 @@ def load_model(spark: SparkSession) -> ALSModel:
     for source in order:
         path = LOCAL_MODEL_PATH if source == "local" else HDFS_MODEL_PATH
         try:
-            print(f"🔄 Đang tải model ALS từ ({source.upper()}): {path}")
+            print(f" Đang tải model ALS từ ({source.upper()}): {path}")
             model = ALSModel.load(path)
-            print("✅ Tải model thành công.")
+            print("Tải model thành công.")
 
             if source == "local" and AUTO_PUSH_MODEL_TO_HDFS:
                 try:
-                    print(f"🚀 Mirror model local lên HDFS: {HDFS_MODEL_PATH}")
+                    print(f"Mirror model local lên HDFS: {HDFS_MODEL_PATH}")
                     model.write().overwrite().save(HDFS_MODEL_PATH)
-                    print("✅ Đã cập nhật model trên HDFS.")
+                    print("Đã cập nhật model trên HDFS.")
                 except Exception as push_err:
-                    print(f"⚠️ Không thể push model lên HDFS: {push_err}")
+                    print(f" Không thể push model lên HDFS: {push_err}")
 
             if AUX_EXPORT_ITEM_FACTORS and ITEM_FACTORS_EXPORT_PATH:
                 try:
-                    print(f"🗂  Đang export itemFactors tới {ITEM_FACTORS_EXPORT_PATH} ...")
+                    print(f"Đang export itemFactors tới {ITEM_FACTORS_EXPORT_PATH} ...")
                     model.itemFactors.write.mode("overwrite").parquet(ITEM_FACTORS_EXPORT_PATH)
-                    print("✅ Export itemFactors thành công.")
+                    print("Export itemFactors thành công.")
                 except Exception as export_err:
-                    print(f"⚠️ Không thể export itemFactors: {export_err}")
+                    print(f"Không thể export itemFactors: {export_err}")
             return model
         except Exception as err:
-            print(f"⚠️ Không load được model từ {path}: {err}")
+            print(f"Không load được model từ {path}: {err}")
             last_error = err
 
     raise RuntimeError(

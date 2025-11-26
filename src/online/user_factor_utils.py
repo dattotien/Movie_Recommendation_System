@@ -9,12 +9,7 @@ def solve_user_factor(
     ratings: Sequence[float],
     reg: float = 0.1,
 ) -> List[float]:
-    """
-    Giải hệ least-squares để tìm user factor mới.
-    item_vectors: danh sách vector của các movie mà user vừa rating (kích thước rank)
-    ratings: danh sách rating tương ứng
-    reg: hệ số regularization (giống regParam của ALS)
-    """
+
     if not item_vectors:
         raise ValueError("Không có item vector để cập nhật user factor.")
 

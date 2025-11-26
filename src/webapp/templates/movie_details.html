@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ movie.title or 'Chi tiết phim' }}</title>
     <style>
-      /* --- COPY STYLE TỪ TRANG CHỦ ĐỂ ĐỒNG BỘ --- */
       body {
         font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         margin: 0;
-        background-color: #64d1ad; /* Màu nền xanh ngọc */
+        background-color: #64d1ad; 
         line-height: 1.8;
         display: flex;
         justify-content: center;
@@ -20,14 +19,13 @@
 
       .container {
         width: 90%;
-        max-width: 1000px; /* Rộng hơn một chút để chứa info phim */
-        background: #ffffff89; /* Nền trắng mờ */
+        max-width: 1000px; 
+        background: #ffffff89; 
         padding: 40px;
         border-radius: 12px;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       }
 
-      /* Link quay lại */
       .back-link {
         display: inline-block;
         margin-bottom: 25px;
@@ -42,7 +40,6 @@
         text-decoration: underline;
       }
 
-      /* --- PHẦN CHI TIẾT PHIM --- */
       .movie-detail-layout {
         display: flex;
         gap: 40px;
@@ -50,11 +47,11 @@
       }
 
       .movie-detail-poster {
-        flex-shrink: 0; /* Không cho poster bị co lại */
+        flex-shrink: 0; 
       }
 
       .movie-detail-poster img {
-        width: 300px; /* Poster to rõ */
+        width: 300px; 
         height: auto;
         border-radius: 10px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
@@ -99,7 +96,7 @@
         color: #2c3e50;
         font-size: 1.5em;
         margin-bottom: 10px;
-        border-bottom: 2px solid #4d87c6; /* Line màu xanh chủ đạo */
+        border-bottom: 2px solid #4d87c6; 
         display: inline-block;
         padding-bottom: 5px;
       }
@@ -111,11 +108,10 @@
         text-align: justify;
       }
 
-      /* --- PHẦN RATING (PANEL) --- */
       .rating-panel {
         margin-top: 40px;
         padding: 30px;
-        background-color: #ffffff; /* Nền trắng rõ hơn để nổi bật */
+        background-color: #ffffff; 
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       }
@@ -130,7 +126,6 @@
         width: 100%;
       }
 
-      /* Form Styles giống trang chủ */
       form div {
         display: flex;
         gap: 15px;
@@ -148,18 +143,18 @@
       input[type="number"] {
         padding: 12px 15px;
         border: 1px solid #ccc;
-        border-radius: 10px; /* Bo góc giống trang chủ */
+        border-radius: 10px;
         font-size: 1em;
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
         width: 200px;
       }
 
       button[type="submit"] {
-        background-color: #4d87c6; /* Màu xanh chủ đạo */
+        background-color: #4d87c6; 
         color: white;
         padding: 12px 30px;
         border: none;
-        border-radius: 50px; /* Nút hình viên thuốc */
+        border-radius: 50px; 
         cursor: pointer;
         font-size: 1em;
         font-weight: bold;
@@ -181,7 +176,6 @@
         margin-bottom: 20px;
       }
 
-      /* --- RESPONSIVE --- */
       @media (max-width: 768px) {
         .container {
           width: 95%;
