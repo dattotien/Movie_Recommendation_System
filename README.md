@@ -144,7 +144,6 @@ Movie_Recommendation_System/
 │   │
 │   └── 📁 webapp/                        # Flask web application
 │       ├── app.py                        # Main Flask application
-│       ├── README.md                     # Webapp documentation
 │       ├── 📁 static/                    # Static resources (CSS, JS, images)
 │       └── 📁 templates/                 # HTML templates
 │           ├── index.html                # Home page
