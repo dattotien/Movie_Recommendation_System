@@ -5,33 +5,25 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import pandas as pd
 import requests
 
-# --- Thêm đường dẫn để import ---
-# Thêm 'src' (để import utils)
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# Thêm thư mục gốc (để import scripts)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-# --- Import các file của bạn ---
-# (Đảm bảo file này là file tôi đã gửi, có hàm get_cassandra_session, read_recs)
+
 from utils.cassandra_connector import get_cassandra_session, read_recs, create_keyspace_and_table
 create_keyspace_and_table()
-# (Đảm bảo file này là file tôi đã gửi, có hàm send_new_rating)
 from scripts.kafka_producer import send_new_rating
 
 app = Flask(__name__)
-app.secret_key = 'bigdata_secret_key' # Cần cho flash messages
+app.secret_key = 'bigdata_secret_key'
 
-# === CẤU HÌNH API VÀ BỘ ĐỆM (CACHE) ===
-TMDB_API_KEY = "f725eef7825ef832dc7836cdf97fb091" # <<<<< THAY KEY CỦA BẠN VÀO ĐÂY
+TMDB_API_KEY = "f725eef7825ef832dc7836cdf97fb091"
 TMDB_POSTER_BASE_URL = "https://image.tmdb.org/t/p/w200"
 TMDB_POSTER_BASE_URL_W500 = "https://image.tmdb.org/t/p/w500"
-POSTER_CACHE = {} # Cache đơn giản để lưu poster
-MOVIE_MAP = {} # Map chi tiết phim
+POSTER_CACHE = {} 
+MOVIE_MAP = {} 
 MOVIE_DETAILS_CACHE = {}
 def get_rich_movie_details(tmdb_id):
-    """
-    Lấy chi tiết đầy đủ (mô tả, ngày phát hành...) từ tmdbId (có cache).
-    """
     if not tmdb_id or pd.isna(tmdb_id):
         return None
 
@@ -39,19 +31,16 @@ def get_rich_movie_details(tmdb_id):
         return MOVIE_DETAILS_CACHE[tmdb_id]
         
     try:
-        # Thêm language=vi-VN để lấy mô tả tiếng Việt (nếu có)
         api_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}&language=vi-VN"
         response = requests.get(api_url, timeout=5)
         response.raise_for_status()
         
         data = response.json()
-        
-        # Lấy các thông tin cần thiết
+  
         details = {
             "overview": data.get('overview', 'Không có mô tả.'),
             "release_date": data.get('release_date', 'Không rõ'),
             "tagline": data.get('tagline', ''),
-            # Lấy poster lớn hơn cho trang chi tiết
             "poster_url_large": f"{TMDB_POSTER_BASE_URL_W500}{data.get('poster_path')}" if data.get('poster_path') else None
         }
         
@@ -60,7 +49,7 @@ def get_rich_movie_details(tmdb_id):
         
     except Exception as e:
         print(f"Lỗi khi gọi API TMDb chi tiết cho ID {tmdb_id}: {e}", file=sys.stderr)
-        MOVIE_DETAILS_CACHE[tmdb_id] = None # Cache lỗi để không gọi lại
+        MOVIE_DETAILS_CACHE[tmdb_id] = None 
         return None
 @app.route('/movie/<int:movie_id>')
 def movie_details(movie_id):
@@ -68,23 +57,18 @@ def movie_details(movie_id):
     rich_details = None
     error = None
     
-    # Lấy User ID từ URL (sẽ được truyền từ link ở index.html)
     user_id = request.args.get('user_id', '')
 
     try:
-        # 1. Lấy thông tin cơ bản từ MOVIE_MAP
         movie_info = MOVIE_MAP.get(movie_id)
         
         if movie_info:
-            # 2. Lấy thông tin chi tiết từ TMDb
             tmdb_id = movie_info.get('tmdbId')
             rich_details = get_rich_movie_details(tmdb_id)
-            
-            # Gộp thông tin lại
-            movie_info['id'] = movie_id # Đảm bảo có ID
+
+            movie_info['id'] = movie_id 
             movie_info.update(rich_details if rich_details else {})
             
-            # Xử lý nếu không có poster lớn
             if 'poster_url_large' not in movie_info or not movie_info['poster_url_large']:
                  movie_info['poster_url_large'] = get_poster_url(tmdb_id) # Dùng lại poster nhỏ
 
@@ -100,10 +84,6 @@ def movie_details(movie_id):
                            user_id_to_rate=user_id,
                            error=error)
 def load_movie_details(movies_csv_path, links_csv_path):
-    """
-    Hàm mới: Đọc movies.csv và links.csv, gộp chúng lại.
-    Tạo ra một map: { movieId -> {"title": "...", "tmdbId": "..."} }
-    """
     try:
         movies_df = pd.read_csv(movies_csv_path)
         links_df = pd.read_csv(links_csv_path, dtype={'tmdbId': str}) # Đọc tmdbId dạng chuỗi
@@ -124,9 +104,6 @@ def load_movie_details(movies_csv_path, links_csv_path):
         return {}
 
 def get_poster_url(tmdb_id):
-    """
-    Lấy poster URL từ tmdbId (có cache).
-    """
     if not tmdb_id or pd.isna(tmdb_id):
         return None
 
@@ -153,25 +130,19 @@ def get_poster_url(tmdb_id):
         POSTER_CACHE[tmdb_id] = None
         return None
 
-# === KHỞI ĐỘNG APP ===
-# 1. Khởi tạo kết nối Cassandra (hàm này sẽ tự tạo keyspace/table)
 print("Initializing Cassandra Session...")
 get_cassandra_session() 
 
-# 2. Tải chi tiết phim
 print("Loading movie details map...")
 MOVIE_MAP_PATH = 'data/ml-32m/ml-32m/movies.csv'
 LINKS_MAP_PATH = 'data/ml-32m/ml-32m/links.csv'
 MOVIE_MAP = load_movie_details(MOVIE_MAP_PATH, LINKS_MAP_PATH)
 print("Web App is ready.")
 
-# === ROUTE 1: TRANG CHỦ ===
 @app.route('/', methods=['GET'])
 def index():
-    # Chỉ hiển thị trang, dùng template 'index_bigdata.html'
     return render_template('index.html')
 
-# === ROUTE 2: LẤY GỢI Ý (ĐỌC TỪ CASSANDRA) ===
 @app.route('/get_recs', methods=['POST'])
 def get_recommendations():
     user_id = request.form.get('user_id_lookup')
@@ -182,34 +153,9 @@ def get_recommendations():
         error = "Vui lòng nhập User ID để tra cứu."
     else:
         try:
-            # === THAY ĐỔI CHÍNH Ở ĐÂY ===
-            # Thay vì đọc từ C*, ta giả lập 1 danh sách ID phim
-            movie_id_list = read_recs(user_id) # << DÒNG GỐC
-            # movie_id_list = [1, 2, 3, 4, 5, 110, 260, 593] # << DÒNG THAY THẾ
-            # (Bạn có thể dùng bất kỳ ID nào có trong file movies.csv)
-            # ============================
+            movie_id_list = read_recs(user_id) 
             
             if movie_id_list:
-                # for movie_id in movie_id_list:
-                #     # ... (phần code còn lại giữ nguyên) ...
-                #     movie_details = MOVIE_MAP.get(int(movie_id))
-                    
-                #     if movie_details:
-                #         title = movie_details.get('title', f"Không rõ tên (ID: {movie_id})")
-                #         tmdb_id = movie_details.get('tmdbId')
-                #         poster_url = get_poster_url(tmdb_id)
-                        
-                #         recommendations.append({
-                #             "id": movie_id, 
-                #             "title": title,
-                #             "poster_url": poster_url
-                #         })
-                #     else:
-                #          recommendations.append({
-                #             "id": movie_id, 
-                #             "title": f"Không rõ tên (ID: {movie_id})",
-                #             "poster_url": None
-                #         })
                 filtered_recs = []
                 for movie_id in movie_id_list:
                     movie_details = MOVIE_MAP.get(int(movie_id))
@@ -227,7 +173,6 @@ def get_recommendations():
                         "poster_url": poster_url
                     })
 
-                # Lấy 10 phim cuối cùng sau khi đã lọc
                 recommendations = filtered_recs[-10:]
             else:
                 error = f"Không tìm thấy gợi ý cho User {user_id} (Lớp Batch chưa chạy?)."
@@ -240,10 +185,8 @@ def get_recommendations():
                            user_id_checked=user_id, 
                            lookup_error=error)
 
-# === ROUTE 3: GỬI RATING (GHI VÀO KAFKA) ===
 @app.route('/send_rating', methods=['POST'])
 def handle_new_rating():
-    # Tên input là 'user_id_rate', 'movie_id_rate', 'rating_rate'
     user_id = request.form.get('user_id_rate')
     movie_id = request.form.get('movie_id_rate')
     rating = request.form.get('rating_rate')
@@ -257,9 +200,7 @@ def handle_new_rating():
     except Exception as e:
         flash(f'Lỗi khi gửi: {e}', 'danger')
 
-    return redirect(url_for('index')) # Quay lại trang chính
-
-# === CHẠY APP ===
+    return redirect(url_for('index')) 
 if __name__ == '__main__':
     if TMDB_API_KEY == "f725eef786cdf97fb091":
         print("="*50, file=sys.stderr)
@@ -272,5 +213,4 @@ if __name__ == '__main__':
         print("Hãy chắc chắn bạn chạy app từ thư mục gốc (nơi có file docker-compose.yml)", file=sys.stderr)
         print("="*50, file=sys.stderr)
     else:
-        # Chạy app trên cổng 5000, mở cho mọi IP
         app.run(host='0.0.0.0', port=5000, debug=True)

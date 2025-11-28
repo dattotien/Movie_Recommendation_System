@@ -17,10 +17,9 @@ docker compose ps
 
 docker compose exec app bash
 
-spark-submit src/batch/write_recommendations.py
 http://localhost:5000/
 #Đợi chạy xong - ghi hoàn tất thì chạy tiếp 
-python3 src/webapp/app.py
+# python3 src/webapp/app.py
  #Xong test thử và tạo 1 rating user đã mới chạy cái ở dưới
 
 
